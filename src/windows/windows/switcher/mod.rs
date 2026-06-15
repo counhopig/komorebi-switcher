@@ -347,13 +347,42 @@ impl SwitcherWindowView {
             .busy_indicator
             .as_ref()
             .and_then(|c| egui_color_from_color(c));
+        let background_color = resolved
+            .background
+            .as_ref()
+            .and_then(|c| egui_color_from_color(c));
+        let busy_background_color = resolved
+            .busy_background
+            .as_ref()
+            .and_then(|c| egui_color_from_color(c));
+        let active_background_color = resolved
+            .active_background
+            .as_ref()
+            .and_then(|c| egui_color_from_color(c));
+        let border_color = resolved
+            .border
+            .as_ref()
+            .and_then(|c| egui_color_from_color(c));
+        let busy_border_color = resolved
+            .busy_border
+            .as_ref()
+            .and_then(|c| egui_color_from_color(c));
+        let active_border_color = resolved
+            .active_border
+            .as_ref()
+            .and_then(|c| egui_color_from_color(c));
 
         let btn = WorkspaceButton::new(workspace)
             .dark_mode(Some(self.is_system_dark_mode()))
             .line_active_color_opt(active_indicator_color)
             .line_busy_color_opt(busy_indicator_color)
+            .background_color_opt(background_color)
+            .busy_background_color_opt(busy_background_color)
+            .active_background_color_opt(active_background_color)
+            .border_color_opt(border_color)
+            .busy_border_color_opt(busy_border_color)
+            .active_border_color_opt(active_border_color)
             .width_opt(uniform_width)
-            .highlight_focused_opt(Some(resolved.highlight_focused_workspace))
             .text_color_opt(self.forgreound_color);
 
         if ui.add(btn).clicked() {
@@ -371,7 +400,9 @@ impl SwitcherWindowView {
             .monitor_state
             .workspaces
             .iter()
-            .filter(|workspace| !(hide_empty_workspaces && workspace.is_empty && !workspace.focused))
+            .filter(|workspace| {
+                !(hide_empty_workspaces && workspace.is_empty && !workspace.focused)
+            })
             .collect::<Vec<_>>();
 
         let uniform_width = {

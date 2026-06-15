@@ -8,9 +8,14 @@ use serde::{Deserialize, Serialize};
 pub struct ResolvedMonitorConfig {
     pub show_layout_button: bool,
     pub hide_empty_workspaces: bool,
-    pub highlight_focused_workspace: bool,
     pub font_family: Option<String>,
     pub font_weight: u16,
+    pub background: Option<String>,
+    pub busy_background: Option<String>,
+    pub active_background: Option<String>,
+    pub border: Option<String>,
+    pub busy_border: Option<String>,
+    pub active_border: Option<String>,
     pub active_indicator: Option<String>,
     pub busy_indicator: Option<String>,
     pub auto_width: bool,
@@ -32,6 +37,18 @@ fn default_height() -> i32 {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ColorsConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub background: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub busy_background: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_background: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub border: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub busy_border: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_border: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_indicator: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub busy_indicator: Option<String>,
@@ -39,7 +56,14 @@ pub struct ColorsConfig {
 
 impl ColorsConfig {
     pub fn is_empty(&self) -> bool {
-        self.active_indicator.is_none() && self.busy_indicator.is_none()
+        self.background.is_none()
+            && self.busy_background.is_none()
+            && self.active_background.is_none()
+            && self.border.is_none()
+            && self.busy_border.is_none()
+            && self.active_border.is_none()
+            && self.active_indicator.is_none()
+            && self.busy_indicator.is_none()
     }
 }
 
@@ -49,9 +73,6 @@ pub struct MonitorConfig {
     pub show_layout_button: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hide_empty_workspaces: Option<bool>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub highlight_focused_workspace: Option<bool>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub font_family: Option<String>,
@@ -82,7 +103,6 @@ impl Default for MonitorConfig {
         Self {
             show_layout_button: None,
             hide_empty_workspaces: None,
-            highlight_focused_workspace: None,
             font_family: None,
             font_weight: None,
             colors: ColorsConfig::default(),
@@ -102,9 +122,6 @@ pub struct Config {
     pub show_layout_button: bool,
     #[serde(default)]
     pub hide_empty_workspaces: bool,
-
-    #[serde(default = "default_true")]
-    pub highlight_focused_workspace: bool,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub font_family: Option<String>,
@@ -197,13 +214,24 @@ impl Config {
             .hide_empty_workspaces
             .unwrap_or(self.hide_empty_workspaces);
 
-        let highlight_focused_workspace = mc
-            .highlight_focused_workspace
-            .unwrap_or(self.highlight_focused_workspace);
-
         let font_family = mc.font_family.or(self.font_family.clone());
         let font_weight = mc.font_weight.or(self.font_weight).unwrap_or(400);
 
+        let background = mc.colors.background.or(self.colors.background.clone());
+        let busy_background = mc
+            .colors
+            .busy_background
+            .or(self.colors.busy_background.clone());
+        let active_background = mc
+            .colors
+            .active_background
+            .or(self.colors.active_background.clone());
+        let border = mc.colors.border.or(self.colors.border.clone());
+        let busy_border = mc.colors.busy_border.or(self.colors.busy_border.clone());
+        let active_border = mc
+            .colors
+            .active_border
+            .or(self.colors.active_border.clone());
         let active_indicator = mc
             .colors
             .active_indicator
@@ -216,9 +244,14 @@ impl Config {
         ResolvedMonitorConfig {
             show_layout_button,
             hide_empty_workspaces,
-            highlight_focused_workspace,
             font_family,
             font_weight,
+            background,
+            busy_background,
+            active_background,
+            border,
+            busy_border,
+            active_border,
             active_indicator,
             busy_indicator,
             auto_width: mc.auto_width,

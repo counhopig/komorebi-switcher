@@ -5,9 +5,14 @@ pub struct WorkspaceButton<'a> {
     text_color: Option<egui::Color32>,
     line_active_color: Option<egui::Color32>,
     line_busy_color: Option<egui::Color32>,
+    background_color: Option<egui::Color32>,
+    busy_background_color: Option<egui::Color32>,
+    active_background_color: Option<egui::Color32>,
+    border_color: Option<egui::Color32>,
+    busy_border_color: Option<egui::Color32>,
+    active_border_color: Option<egui::Color32>,
     width: Option<f32>,
     dark_mode: Option<bool>,
-    highlight_focused: Option<bool>,
 }
 
 impl<'a> WorkspaceButton<'a> {
@@ -17,9 +22,14 @@ impl<'a> WorkspaceButton<'a> {
             text_color: None,
             line_active_color: None,
             line_busy_color: None,
+            background_color: None,
+            busy_background_color: None,
+            active_background_color: None,
+            border_color: None,
+            busy_border_color: None,
+            active_border_color: None,
             width: None,
             dark_mode: None,
-            highlight_focused: None,
         }
     }
 
@@ -43,13 +53,38 @@ impl<'a> WorkspaceButton<'a> {
         self
     }
 
-    pub fn width_opt(mut self, width: Option<f32>) -> Self {
-        self.width = width;
+    pub fn background_color_opt(mut self, color: Option<egui::Color32>) -> Self {
+        self.background_color = color;
         self
     }
 
-    pub fn highlight_focused_opt(mut self, highlight_focused: Option<bool>) -> Self {
-        self.highlight_focused = highlight_focused;
+    pub fn busy_background_color_opt(mut self, color: Option<egui::Color32>) -> Self {
+        self.busy_background_color = color;
+        self
+    }
+
+    pub fn active_background_color_opt(mut self, color: Option<egui::Color32>) -> Self {
+        self.active_background_color = color;
+        self
+    }
+
+    pub fn border_color_opt(mut self, color: Option<egui::Color32>) -> Self {
+        self.border_color = color;
+        self
+    }
+
+    pub fn busy_border_color_opt(mut self, color: Option<egui::Color32>) -> Self {
+        self.busy_border_color = color;
+        self
+    }
+
+    pub fn active_border_color_opt(mut self, color: Option<egui::Color32>) -> Self {
+        self.active_border_color = color;
+        self
+    }
+
+    pub fn width_opt(mut self, width: Option<f32>) -> Self {
+        self.width = width;
         self
     }
 }
@@ -87,23 +122,45 @@ impl egui::Widget for WorkspaceButton<'_> {
         let painter = ui.painter();
 
         // draw background
-        let highlight_focused = self.highlight_focused.unwrap_or(true);
-        if response.hovered() || (highlight_focused && self.workspace.focused) {
-            let color = if dark_mode {
+        let default_background_color = || {
+            if dark_mode {
                 egui::Color32::from_rgba_unmultiplied(255, 255, 255, 1)
             } else {
                 egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30)
-            };
-
-            let stroke_color = if dark_mode {
+            }
+        };
+        let default_border_color = || {
+            if dark_mode {
                 egui::Color32::from_rgba_unmultiplied(255, 255, 255, 2)
             } else {
                 egui::Color32::from_rgba_unmultiplied(33, 33, 33, 33)
-            };
+            }
+        };
 
+        let state_background_color = if self.workspace.focused {
+            self.active_background_color
+                .or_else(|| Some(default_background_color()))
+        } else if !self.workspace.is_empty {
+            self.busy_background_color.or(self.background_color)
+        } else {
+            self.background_color
+        };
+        let state_border_color = if self.workspace.focused {
+            self.active_border_color
+                .or_else(|| Some(default_border_color()))
+        } else if !self.workspace.is_empty {
+            self.busy_border_color.or(self.border_color)
+        } else {
+            self.border_color
+        };
+
+        let should_draw_background =
+            response.hovered() || state_background_color.is_some() || state_border_color.is_some();
+        if should_draw_background {
+            let color = state_background_color.unwrap_or_else(default_background_color);
             let stroke = egui::Stroke {
                 width: 1.0,
-                color: stroke_color,
+                color: state_border_color.unwrap_or_else(default_border_color),
             };
 
             painter.rect(rect, RADIUS, color, stroke, egui::StrokeKind::Inside);
