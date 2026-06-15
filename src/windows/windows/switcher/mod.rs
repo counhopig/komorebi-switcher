@@ -166,6 +166,30 @@ impl SwitcherWindowView {
             self.accent_color
         }
     }
+
+    fn uniform_workspace_button_width<'a>(
+        &self,
+        ui: &egui::Ui,
+        workspaces: impl Iterator<Item = &'a crate::komorebi::Workspace>,
+    ) -> f32 {
+        const MIN_WIDTH: f32 = 28.0;
+        const HORIZONTAL_TEXT_PADDING: f32 = 16.0;
+
+        let max_text_width = workspaces
+            .map(|workspace| {
+                ui.painter()
+                    .layout_no_wrap(
+                        workspace.name.clone(),
+                        egui::FontId::default(),
+                        egui::Color32::TRANSPARENT,
+                    )
+                    .rect
+                    .width()
+            })
+            .fold(0.0, f32::max);
+
+        (max_text_width + HORIZONTAL_TEXT_PADDING).max(MIN_WIDTH)
+    }
 }
 
 /// Actions
@@ -393,29 +417,17 @@ impl SwitcherWindowView {
             .monitor_state
             .workspaces
             .iter()
-            .filter(|workspace| !(hide_empty_workspaces && workspace.is_empty && !workspace.focused))
+            .filter(|workspace| {
+                !(hide_empty_workspaces && workspace.is_empty && !workspace.focused)
+            })
             .collect::<Vec<_>>();
 
-        let uniform_width = {
-            const MIN_WIDTH: f32 = 28.0;
-            const HORIZONTAL_TEXT_PADDING: f32 = 16.0;
-
-            let max_text_width = visible_workspaces
-                .iter()
-                .map(|workspace| {
-                    ui.painter()
-                        .layout_no_wrap(
-                            workspace.name.clone(),
-                            egui::FontId::default(),
-                            egui::Color32::TRANSPARENT,
-                        )
-                        .rect
-                        .width()
-                })
-                .fold(0.0, f32::max);
-
-            Some((max_text_width + HORIZONTAL_TEXT_PADDING).max(MIN_WIDTH))
+        let uniform_workspace_button_widths = match monitor_config.uniform_workspace_button_widths {
+            Some(uniform_widths) => uniform_widths,
+            None => config.uniform_workspace_button_widths,
         };
+        let uniform_width = uniform_workspace_button_widths
+            .then(|| self.uniform_workspace_button_width(ui, visible_workspaces.iter().copied()));
 
         // Draw a button for each workspace
         for workspace in visible_workspaces {
